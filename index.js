@@ -122,7 +122,7 @@ class Task extends Component {
     const deleteButton = createElement(
         "button",
         {
-          style: this.state.deleteConfirmation ? "background-color: #ff3333;" : "",
+          style: this.state.deleteConfirmation ? "background-color: #ff3333;" : "background-color: #000000;",
         },
         "🗑",
         { click: this.onDelete },
