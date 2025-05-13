@@ -140,7 +140,7 @@ class TodoList extends Component {
   constructor() {
     super()
     this.state = {
-      tasks: [
+      tasks: JSON.parse(localStorage.getItem("tasks")) || [
         { text: "Сделать домашку", completed: false },
         { text: "Сделать практику", completed: false },
         { text: "Пойти домой", completed: false },
@@ -148,24 +148,30 @@ class TodoList extends Component {
     }
   }
 
+  saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(this.state.tasks))
+  }
+
   onAddTask = (text) => {
     this.state.tasks.push({
       text: text,
       completed: false,
     })
+    this.saveTasks()
     this.update()
   }
 
   onToggleComplete = (index) => {
     this.state.tasks[index].completed = !this.state.tasks[index].completed
+    this.saveTasks()
     this.update()
   }
 
   onDeleteTask = (index) => {
     this.state.tasks.splice(index, 1)
+    this.saveTasks()
     this.update()
   }
-
 
   render() {
     return createElement("div", { class: "todo-list" }, [
