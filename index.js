@@ -45,6 +45,97 @@ class Component {
   }
 }
 
+class AddTask extends Component {
+  constructor(onAddTask) {
+    super()
+    this.onAddTask = onAddTask
+    this.state = {
+      newTaskText: "",
+    }
+  }
+
+  onInputChange = (event) => {
+    this.state.newTaskText = event.target.value
+    // Не вызываем update, так как нам не нужно перерисовывать компонент при изменении текста
+  }
+
+  onAdd = () => {
+    if (this.state.newTaskText.trim() !== "") {
+      this.onAddTask(this.state.newTaskText.trim())
+      this.state.newTaskText = ""
+      this.update()
+    }
+  }
+
+  render() {
+    return createElement("div", { class: "add-todo" }, [
+      createElement(
+          "input",
+          {
+            type: "text",
+            placeholder: "Задание",
+            value: this.state.newTaskText,
+          },
+          [],
+          { input: this.onInputChange },
+      ),
+      createElement("button", {}, "+", { click: this.onAdd }),
+    ])
+  }
+}
+
+class Task extends Component {
+  constructor(task, index, onToggleComplete, onDeleteTask) {
+    super()
+    this.task = task
+    this.index = index
+    this.onToggleComplete = onToggleComplete
+    this.onDeleteTask = onDeleteTask
+    this.state = {
+      deleteConfirmation: false,
+    }
+  }
+
+  onToggle = () => {
+    this.onToggleComplete(this.index)
+  }
+
+  onDelete = () => {
+    if (this.state.deleteConfirmation) {
+      // Если уже было первое нажатие, удаляем задачу
+      this.onDeleteTask(this.index)
+    } else {
+      // Первое нажатие - просто меняем цвет кнопки
+      this.state.deleteConfirmation = true
+      this.update()
+    }
+  }
+
+  render() {
+    const checkbox = createElement("input", { type: "checkbox" }, [], {
+      change: this.onToggle,
+    })
+
+    // Устанавливаем свойство checked напрямую
+    checkbox.checked = this.task.completed
+
+    const deleteButton = createElement(
+        "button",
+        {
+          style: this.state.deleteConfirmation ? "background-color: #ff3333;" : "",
+        },
+        "🗑",
+        { click: this.onDelete },
+    )
+
+    return createElement("li", {}, [
+      checkbox,
+      createElement("label", { class: this.task.completed ? "completed" : "" }, this.task.text),
+      deleteButton,
+    ])
+  }
+}
+
 class TodoList extends Component {
   constructor() {
     super()
@@ -54,23 +145,15 @@ class TodoList extends Component {
         { text: "Сделать практику", completed: false },
         { text: "Пойти домой", completed: false },
       ],
-      newTaskText: "",
     }
   }
 
-  onAddInputChange = (event) => {
-    this.state.newTaskText = event.target.value
-  }
-
-  onAddTask = () => {
-    if (this.state.newTaskText.trim() !== "") {
-      this.state.tasks.push({
-        text: this.state.newTaskText.trim(),
-        completed: false,
-      })
-      this.state.newTaskText = ""
-      this.update()
-    }
+  onAddTask = (text) => {
+    this.state.tasks.push({
+      text: text,
+      completed: false,
+    })
+    this.update()
   }
 
   onToggleComplete = (index) => {
@@ -83,42 +166,17 @@ class TodoList extends Component {
     this.update()
   }
 
+
   render() {
     return createElement("div", { class: "todo-list" }, [
       createElement("h1", {}, "TODO List"),
-      createElement("div", { class: "add-todo" }, [
-        createElement(
-            "input",
-            {
-              id: "new-todo",
-              type: "text",
-              placeholder: "Задание",
-              value: this.state.newTaskText,
-            },
-            [],
-            { input: this.onAddInputChange },
-        ),
-        createElement("button", { id: "add-btn" }, "+", { click: this.onAddTask }),
-      ]),
+      new AddTask(this.onAddTask).getDomNode(),
       createElement(
           "ul",
           { id: "todos" },
-          this.state.tasks.map((task, index) => {
-            const checkbox = createElement("input", { type: "checkbox" }, [], {
-              change: () => this.onToggleComplete(index),
-            })
-
-            // Set the checked property directly
-            checkbox.checked = task.completed
-
-            return createElement("li", {}, [
-              checkbox,
-              createElement("label", { class: task.completed ? "completed" : "" }, task.text),
-              createElement("button", {}, "🗑️", {
-                click: () => this.onDeleteTask(index),
-              }),
-            ])
-          }),
+          this.state.tasks.map((task, index) =>
+              new Task(task, index, this.onToggleComplete, this.onDeleteTask).getDomNode(),
+          ),
       ),
     ])
   }
